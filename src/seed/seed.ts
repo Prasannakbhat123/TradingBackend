@@ -95,6 +95,7 @@ async function seed() {
 
   const buyerUser = await User.findOne({ email: 'buyer@lattice.dev' });
   if (!buyerUser) throw new Error('Buyer user missing');
+  const buyerUserId = buyerUser._id;
 
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
@@ -211,7 +212,7 @@ async function seed() {
   ) {
     const order = await Order.create({
       buyerOrgId: buyer._id,
-      createdBy: buyerUser._id,
+      createdBy: buyerUserId,
       type: 'rfq_accept',
       status: 'filled',
       gpuType,

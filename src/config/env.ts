@@ -16,8 +16,15 @@ function req(name: string, fallback?: string): string {
 
 export const env = {
   mongoUri: req('MONGO_URI'),
-  jwtSecret: req('JWT_SECRET', 'dev-lattice-secret-change-me'),
+  jwtSecret:
+    process.env.NODE_ENV === 'production'
+      ? req('JWT_SECRET')
+      : req('JWT_SECRET', 'dev-lattice-secret-change-me'),
   port: Number(process.env.PORT || 4000),
+  frontendOrigins: (process.env.FRONTEND_ORIGIN || '')
+    .split(',')
+    .map((s) => s.trim().replace(/\/$/, ''))
+    .filter(Boolean),
   ornnApiKey: process.env.ORNN_API_KEY || '',
   ornnGpuWatchlist: (process.env.ORNN_GPU_WATCHLIST || 'H100 SXM,H200,B200')
     .split(',')

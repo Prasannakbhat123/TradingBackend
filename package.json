@@ -9,6 +9,9 @@
     "seed": "tsx src/seed/seed.ts",
     "build": "tsc"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
@@ -17,6 +20,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.0",
     "socket.io": "^4.8.1",
+    "tsx": "^4.19.3",
     "zod": "^3.24.4"
   },
   "devDependencies": {
@@ -25,7 +29,6 @@
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.14.1",
-    "tsx": "^4.19.3",
     "typescript": "^5.8.3"
   }
 }

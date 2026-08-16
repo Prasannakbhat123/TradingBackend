@@ -28,7 +28,11 @@ async function main() {
   await connectDb();
 
   const app = express();
-  app.use(cors({ origin: true, credentials: true }));
+  const corsOrigin =
+    env.frontendOrigins.length > 0
+      ? env.frontendOrigins
+      : true;
+  app.use(cors({ origin: corsOrigin, credentials: true }));
   app.use(express.json({ limit: '2mb' }));
 
   app.get('/health', (_req, res) => res.json({ ok: true, service: 'lattice' }));
@@ -49,7 +53,7 @@ async function main() {
   app.use(errorHandler);
 
   const server = http.createServer(app);
-  const io = new Server(server, { cors: { origin: true } });
+  const io = new Server(server, { cors: { origin: corsOrigin } });
 
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token || socket.handshake.query?.token;
@@ -71,8 +75,8 @@ async function main() {
 
   startFeedScheduler();
 
-  server.listen(env.port, () => {
-    console.log(`[lattice] API listening on http://localhost:${env.port}`);
+  server.listen(env.port, '0.0.0.0', () => {
+    console.log(`[lattice] API listening on port ${env.port}`);
   });
 }
 

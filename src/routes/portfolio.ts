@@ -94,7 +94,7 @@ settlementRouter.post(
       deliveredQuantity?: number;
       exceptionNote?: string;
     };
-    const allocation = await updateProvisioning(req.params.allocationId!, req.user!, body.status, {
+    const allocation = await updateProvisioning(String(req.params.allocationId), req.user!, body.status, {
       deliveredQuantity: body.deliveredQuantity,
       exceptionNote: body.exceptionNote,
     });
@@ -108,7 +108,7 @@ settlementRouter.post(
   requireRoles('provider_dealer', 'buyer', 'admin', 'risk'),
   asyncHandler(async (req, res) => {
     const settlement = await closeSettlement(
-      req.params.allocationId!,
+      String(req.params.allocationId),
       req.user!,
       (req.body as { notes?: string }).notes
     );

@@ -81,7 +81,7 @@ ordersRouter.post(
   requireAuth,
   requireRoles('buyer', 'risk', 'admin'),
   asyncHandler(async (req, res) => {
-    const result = await approveOrder(req.params.id!, req.user!);
+    const result = await approveOrder(String(req.params.id), req.user!);
     res.json(result);
   })
 );
@@ -91,7 +91,7 @@ ordersRouter.post(
   requireAuth,
   requireRoles('buyer', 'admin'),
   asyncHandler(async (req, res) => {
-    const order = await cancelOrder(req.params.id!, req.user!);
+    const order = await cancelOrder(String(req.params.id), req.user!);
     res.json({ order });
   })
 );
