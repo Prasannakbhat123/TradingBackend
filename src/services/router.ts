@@ -5,9 +5,42 @@ import { Quote } from '../models/Quote.js';
 import { IRfq } from '../models/Rfq.js';
 import { MarketDataPoint } from '../models/MarketDataPoint.js';
 import { writeAudit } from './audit.js';
+import { ingestOrnn } from './feeds/ornn.js';
+import { ingestGpuCloudPrices } from './feeds/gpuCloudPrices.js';
 
 function effectiveCost(price: number, qty: number, hours: number, feesPct: number): number {
   return price * qty * hours * (1 + feesPct / 100);
+}
+
+function gpuTokenRegex(gpuType: string): RegExp {
+  const token = (gpuType.split(/\s+/)[0] || gpuType).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(token, 'i');
+}
+
+async function latestGpuPoint(source: 'ornn' | 'gpucloudprices', gpuType: string) {
+  const rx = gpuTokenRegex(gpuType);
+  return MarketDataPoint.findOne({
+    source,
+    pricePerGpuHour: { $ne: null },
+    $or: [{ instrumentKey: rx }, { label: rx }],
+  })
+    .sort({ asOf: -1 })
+    .lean();
+}
+
+/** Latest Ornn index + cloud-min board for a GPU. Ingests those feeds if Mongo has none yet. */
+export async function getGpuReferences(gpuType: string) {
+  let ornn = await latestGpuPoint('ornn', gpuType);
+  let gpucloudprices = await latestGpuPoint('gpucloudprices', gpuType);
+
+  if (!ornn || !gpucloudprices) {
+    if (!ornn) await ingestOrnn().catch(() => 0);
+    if (!gpucloudprices) await ingestGpuCloudPrices().catch(() => 0);
+    if (!ornn) ornn = await latestGpuPoint('ornn', gpuType);
+    if (!gpucloudprices) gpucloudprices = await latestGpuPoint('gpucloudprices', gpuType);
+  }
+
+  return { ornn: ornn ?? null, gpucloudprices: gpucloudprices ?? null };
 }
 
 export async function routeRfq(rfq: IRfq & { _id: Types.ObjectId }, actor?: { id: string; email: string }) {
@@ -40,19 +73,7 @@ export async function routeRfq(rfq: IRfq & { _id: Types.ObjectId }, actor?: { id
     return true;
   });
 
-  const ornnRef = await MarketDataPoint.findOne({
-    source: 'ornn',
-    instrumentKey: new RegExp(rfq.gpuType.split(/\s+/)[0], 'i'),
-  })
-    .sort({ asOf: -1 })
-    .lean();
-
-  const gcpRef = await MarketDataPoint.findOne({
-    source: 'gpucloudprices',
-    instrumentKey: new RegExp(rfq.gpuType.split(/\s+/)[0], 'i'),
-  })
-    .sort({ asOf: -1 })
-    .lean();
+  const { ornn: ornnRef, gpucloudprices: gcpRef } = await getGpuReferences(rfq.gpuType);
 
   const quotes = [];
   for (const inv of candidates) {

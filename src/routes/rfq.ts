@@ -4,7 +4,7 @@ import { Rfq } from '../models/Rfq.js';
 import { Quote } from '../models/Quote.js';
 import { requireAuth, requireRoles } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/error.js';
-import { routeRfq } from '../services/router.js';
+import { getGpuReferences, routeRfq } from '../services/router.js';
 import { writeAudit } from '../services/audit.js';
 
 export const rfqRouter = Router();
@@ -34,13 +34,14 @@ rfqRouter.get(
   '/:id',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const rfq = await Rfq.findById(req.params.id);
+    const rfq = await Rfq.findById(String(req.params.id));
     if (!rfq) {
       res.status(404).json({ error: 'RFQ not found' });
       return;
     }
     const quotes = await Quote.find({ rfqId: rfq._id }).sort({ rankScore: -1 });
-    res.json({ rfq, quotes });
+    const references = await getGpuReferences(rfq.gpuType);
+    res.json({ rfq, quotes, references });
   })
 );
 

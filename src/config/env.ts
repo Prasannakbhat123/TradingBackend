@@ -26,7 +26,7 @@ export const env = {
     .map((s) => s.trim().replace(/\/$/, ''))
     .filter(Boolean),
   ornnApiKey: process.env.ORNN_API_KEY || '',
-  ornnGpuWatchlist: (process.env.ORNN_GPU_WATCHLIST || 'H100 SXM,H200,B200')
+  ornnGpuWatchlist: (process.env.ORNN_GPU_WATCHLIST || 'H100 SXM,H200,B200,A100')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),
